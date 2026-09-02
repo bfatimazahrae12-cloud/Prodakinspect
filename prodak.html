@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onafhankelijke dakinspectie met drone | Pro Dak Inspect</title>
+<meta name="description" content="Pro Dak Inspect brengt daken, gevels en zonnepanelen professioneel in beeld met drone-inspecties in Belgi\u00eb.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --radius:.25rem;
+  --ink: oklch(14.5% 0 0);
+  --ink-soft: oklch(18% 0 0);
+  --charcoal: oklch(26.5% 0 0);
+  --offwhite: oklch(96.8% .004 90);
+  --gold: oklch(74% .09 82);
+  --gold-soft: oklch(84% .06 85);
+  --background: var(--offwhite);
+  --foreground: oklch(18% 0 0);
+  --card: oklch(100% 0 0);
+  --muted: oklch(94% .003 90);
+  --muted-foreground: oklch(50% 0 0);
+  --border: oklch(89% .003 90);
+  --hero-canvas: radial-gradient(120% 90% at 50% 42%, oklch(42% 0 0) 0%, oklch(30% 0 0) 26%, oklch(20% 0 0) 55%, oklch(14.5% 0 0) 78%, oklch(11% 0 0) 100%);
+  --hero-glow: radial-gradient(45% 40% at 50% 40%, color-mix(in oklab, var(--gold) 16%, transparent) 0%, transparent 70%);
+  --shadow-panel: 0 30px 80px -30px oklch(0% 0 0/.75);
+  --shadow-soft: 0 18px 40px -24px oklch(0% 0 0/.28);
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%; display:block;}
+a{color:inherit; text-decoration:none;}
+ul{list-style:none;}
+.container{width:100%; max-width:72rem; margin:0 auto; padding:0 1.5rem;}
+.container-sm{width:100%; max-width:48rem; margin:0 auto; padding:0 1.5rem;}
+
+h1,h2,h3,h4{font-family: var(--font-display); font-weight:600; letter-spacing:-.01em; color:var(--foreground);}
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  font-weight:600; font-size:.9rem; padding:.85rem 1.75rem; border-radius:.25rem;
+  cursor:pointer; border:1px solid transparent; transition:transform .15s ease, background .15s ease, border-color .15s ease;
+  white-space:nowrap;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn-gold{ background: var(--gold); color: var(--ink); }
+.btn-gold:hover{ background: var(--gold-soft); }
+.btn-outline-dark{ border-color: rgba(255,255,255,.35); color:#fff; }
+.btn-outline-dark:hover{ border-color:#fff; }
+.btn-outline{ border-color: var(--border); color: var(--foreground); }
+.btn-outline:hover{ border-color: var(--gold); }
+.btn-dark{ background: var(--ink); color:#fff; }
+.btn-dark:hover{ background:#000; }
+
+/* Header */
+header{
+  position:sticky; top:0; z-index:50;
+  background: rgba(20,20,20,.92); backdrop-filter: blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav-wrap{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.9rem 1.5rem; max-width:80rem; margin:0 auto;
+}
+.nav-links{ display:flex; align-items:center; gap:2rem; }
+.nav-links a{ color: rgba(255,255,255,.78); font-size:.88rem; font-weight:500; transition:color .15s ease; }
+.nav-links a:hover{ color: var(--gold); }
+.brand{ display:flex; align-items:center; gap:.6rem; }
+.brand img{ height:34px; width:auto; }
+.brand-logo-img{ object-fit:contain; }
+.brand-text{ display:flex; flex-direction:column; line-height:1.05; }
+.brand-text .name{ font-family:var(--font-display); font-size:.95rem; letter-spacing:.06em; color:#fff; font-weight:600;}
+.brand-text .tag{ font-size:.55rem; letter-spacing:.12em; color:var(--gold-soft); }
+.header-cta{ display:flex; align-items:center; }
+.menu-toggle{ display:none; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; }
+
+@media (max-width: 900px){
+  .nav-links{ display:none; }
+  .menu-toggle{ display:block; }
+}
+
+/* Hero */
+.hero{
+  position:relative;
+  background:
+    linear-gradient(180deg, oklch(11% 0 0 / .55) 0%, oklch(14.5% 0 0 / .72) 45%, oklch(11% 0 0 / .92) 100%),
+    var(--hero-canvas);
+  background-size: cover, cover;
+  background-position: center, center;
+  color:#fff;
+  padding: 6rem 0 5rem;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image: url('assets/drone-inspection.jpg');
+  background-size: cover;
+  background-position: center 65%;
+  opacity:.28;
+  mix-blend-mode: luminosity;
+  pointer-events:none;
+}
+.hero::after{
+  content:"";
+  position:absolute; inset:0;
+  background: var(--hero-glow);
+  pointer-events:none;
+}
+.hero-inner{ position:relative; z-index:2; max-width:52rem; text-align:center; margin:0 auto; }
+.hero-eyebrow{
+  font-family: var(--font-display);
+  color: var(--gold);
+  letter-spacing:.25em;
+  font-size:.72rem;
+  font-weight:600;
+  margin-bottom:1.5rem;
+}
+.hero-title{
+  font-size:2.6rem;
+  line-height:1.15;
+  color:#fff;
+  margin-bottom:1.5rem;
+}
+.hero-sub{
+  color: rgba(255,255,255,.68);
+  font-size:1rem;
+  line-height:1.7;
+  max-width:42rem;
+  margin:0 auto 2.25rem;
+}
+.hero-actions{
+  display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap;
+  margin-bottom:2rem;
+}
+.hero-motto{
+  font-family: var(--font-display);
+  font-size:.78rem; font-weight:600; letter-spacing:.1em;
+  color: var(--gold-soft);
+  margin-bottom:2.25rem;
+}
+.hero-features{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem;
+  border-top:1px solid rgba(255,255,255,.12); padding-top:2rem; max-width:38rem; margin:0 auto;
+}
+.hero-feature{ text-align:center; }
+.hf-title{ font-family:var(--font-display); color:var(--gold); font-size:.95rem; font-weight:600; margin-bottom:.35rem; }
+.hf-desc{ font-size:.8rem; color: rgba(255,255,255,.6); line-height:1.5; }
+
+@media (max-width: 640px){
+  .hero-title{ font-size:1.9rem; }
+  .hero{ padding:4rem 0 3rem; }
+  .hero-features{ grid-template-columns:1fr; gap:1.1rem; }
+}
+
+/* Section basics */
+.section{ padding:5.5rem 0; }
+.section-muted{ background: var(--muted); }
+.eyebrow{
+  font-family: var(--font-display);
+  font-size:.72rem; font-weight:600; letter-spacing:.2em;
+  color: var(--muted-foreground); margin-bottom:.75rem;
+}
+.section-title{ font-size:1.9rem; margin-bottom:.85rem; max-width:38rem; }
+.section-desc{ color: var(--muted-foreground); max-width:36rem; line-height:1.7; margin-bottom:1.75rem; }
+.tags{ margin-top:1.25rem; font-size:.72rem; letter-spacing:.12em; color:var(--muted-foreground); font-weight:600; }
+
+/* Reason cards */
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:2.25rem; }
+.reason-card{
+  background: var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:1.75rem; box-shadow: var(--shadow-soft);
+}
+.reason-icon{ color: var(--gold); font-size:1.1rem; margin-bottom:.9rem; }
+.reason-card h3{ font-size:1.05rem; margin-bottom:.5rem; }
+.reason-card p{ color: var(--muted-foreground); font-size:.9rem; line-height:1.6; }
+
+/* Drone section */
+.drone-section{ display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center; }
+.drone-image img{ border-radius:.4rem; box-shadow: var(--shadow-panel); }
+
+@media (max-width: 860px){
+  .grid-2{ grid-template-columns:1fr; }
+  .drone-section{ grid-template-columns:1fr; }
+  .drone-image{ order:-1; }
+}
+
+/* Services */
+.service-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-top:2.5rem; }
+.service-card{
+  background: var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:1.9rem; box-shadow: var(--shadow-soft);
+}
+.service-card h3{ font-size:1.05rem; margin-bottom:.3rem; }
+.service-price{ color: var(--gold); font-weight:700; font-size:.85rem; margin-bottom:.75rem; }
+.service-desc{ color: var(--muted-foreground); font-size:.85rem; line-height:1.6; margin-bottom:1.1rem; }
+.service-note{ color: var(--muted-foreground); font-size:.76rem; font-style:italic; line-height:1.5; margin-top:1rem; padding-top:.9rem; border-top:1px dashed var(--border); }
+.service-list{ display:flex; flex-direction:column; gap:.5rem; }
+.service-list li{
+  font-size:.83rem; color: var(--foreground); padding-left:1.1rem; position:relative;
+}
+.service-list li::before{
+  content:"\2713"; position:absolute; left:0; color: var(--gold); font-size:.75rem; top:.1rem;
+}
+
+@media (max-width: 900px){
+  .service-grid{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 640px){
+  .service-grid{ grid-template-columns:1fr; }
+}
+
+/* Pricing - dark section */
+.section-dark{ background: var(--ink); color:#fff; }
+.eyebrow-light{ color: var(--gold); }
+.title-light{ color:#fff; }
+.desc-light{ color: rgba(255,255,255,.6); }
+
+.pricing-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:2.75rem; align-items:start; }
+.price-card{
+  background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.12); border-radius:.4rem;
+  padding:2rem 1.75rem; position:relative;
+}
+.price-card-featured{
+  background: rgba(255,255,255,.06);
+  border-color: var(--gold);
+  transform: translateY(-.5rem);
+  box-shadow: var(--shadow-panel);
+}
+.price-badge{
+  position:absolute; top:-.8rem; left:50%; transform:translateX(-50%);
+  background: var(--gold); color: var(--ink); font-size:.65rem; font-weight:700;
+  letter-spacing:.08em; padding:.3rem .8rem; border-radius:999px; white-space:nowrap;
+}
+.price-name{ font-family:var(--font-display); letter-spacing:.15em; font-size:.72rem; color: rgba(255,255,255,.55); margin-bottom:.6rem; }
+.price-amount{ font-family:var(--font-display); font-size:2.4rem; font-weight:700; color:#fff; margin-bottom:.35rem; }
+.price-tagline{ color: rgba(255,255,255,.65); font-size:.88rem; margin-bottom:1.4rem; }
+.price-tagline:has(+ .price-subtag){ margin-bottom:.35rem; }
+.price-subtag{ color: var(--gold-soft); font-size:.72rem; font-weight:600; letter-spacing:.03em; margin-bottom:1.4rem; }
+.price-note{ color: rgba(255,255,255,.45); font-size:.76rem; font-style:italic; line-height:1.5; margin-bottom:1.25rem; }
+.price-list{ display:flex; flex-direction:column; gap:.6rem; margin-bottom:2rem; }
+.price-list li{ font-size:.85rem; color: rgba(255,255,255,.82); padding-left:1.1rem; position:relative; }
+.price-list li::before{ content:"\2713"; position:absolute; left:0; color: var(--gold); font-size:.75rem; top:.1rem; }
+.price-cta{ width:100%; }
+
+@media (max-width: 900px){
+  .pricing-grid{ grid-template-columns:1fr; }
+  .price-card-featured{ transform:none; }
+}
+
+/* Steps */
+.steps-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-top:2.5rem; }
+.step-card{ padding-top:.5rem; border-top:2px solid var(--gold); }
+.step-num{ font-family:var(--font-display); color: var(--gold); font-size:.85rem; font-weight:700; margin-bottom:.6rem; letter-spacing:.05em; }
+.step-card h3{ font-size:1.05rem; margin-bottom:.5rem; }
+.step-card p{ color: var(--muted-foreground); font-size:.88rem; line-height:1.6; }
+@media (max-width: 860px){ .steps-grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width: 560px){ .steps-grid{ grid-template-columns:1fr; } }
+
+/* Schade */
+.schade-section{ background:#111; color:#fff; text-align:left; }
+.schade-title{ color:#fff; max-width:34rem; }
+.schade-desc{ color: rgba(255,255,255,.62); max-width:34rem; }
+.schade-note{ margin:0 0 1.5rem; color: var(--gold); font-size:.8rem; font-weight:600; letter-spacing:.05em; }
+.schade-disclaimer{ margin-top:1.25rem; color: rgba(255,255,255,.4); font-size:.76rem; font-style:italic; max-width:34rem; }
+
+/* FAQ */
+.faq-list{ margin-top:2rem; border-top:1px solid var(--border); }
+.faq-item{ border-bottom:1px solid var(--border); padding:1.15rem 0; }
+.faq-item summary{
+  cursor:pointer; font-weight:600; font-size:.96rem; list-style:none;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.faq-item summary::-webkit-details-marker{ display:none; }
+.faq-item summary::after{ content:"+"; color: var(--gold); font-size:1.2rem; font-weight:400; margin-left:1rem; }
+.faq-item[open] summary::after{ content:"\2212"; }
+.faq-item p{ color: var(--muted-foreground); font-size:.9rem; line-height:1.7; margin-top:.85rem; max-width:38rem; }
+
+/* Contact */
+.contact-section{ padding-bottom:6rem; }
+.contact-grid{ display:grid; grid-template-columns:.85fr 1.15fr; gap:3.5rem; align-items:start; }
+.contact-details{ margin-top:2rem; display:flex; flex-direction:column; gap:.9rem; font-size:.9rem; color: rgba(255,255,255,.8); }
+.contact-form{ background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); border-radius:.4rem; padding:2rem; }
+.form-row{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-field{ margin-bottom:1.1rem; }
+.form-field label{ display:block; font-size:.78rem; color: rgba(255,255,255,.65); margin-bottom:.4rem; }
+.form-field input, .form-field select, .form-field textarea{
+  width:100%; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
+  border-radius:.25rem; padding:.7rem .85rem; color:#fff; font-family:var(--font-sans); font-size:.88rem;
+}
+.form-field input::placeholder, .form-field textarea::placeholder{ color: rgba(255,255,255,.35); }
+.form-field select{ color: rgba(255,255,255,.85); }
+.file-upload{ display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
+.file-upload input[type="file"]{ position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+.file-upload-btn{
+  display:inline-flex; align-items:center; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+  color:#fff; font-size:.82rem; font-weight:600; padding:.6rem 1.1rem; border-radius:.25rem; cursor:pointer;
+  transition:background .15s ease;
+}
+.file-upload-btn:hover{ background: rgba(255,255,255,.14); }
+.file-upload-status{ font-size:.8rem; color: rgba(255,255,255,.45); }
+
+@media (max-width: 860px){
+  .contact-grid{ grid-template-columns:1fr; }
+  .form-row{ grid-template-columns:1fr; }
+}
+
+/* Footer */
+.footer{
+  position:relative;
+  background:
+    linear-gradient(180deg, oklch(4% 0 0 / .88) 0%, oklch(4% 0 0 / .94) 60%, oklch(2% 0 0 / .98) 100%),
+    url('assets/footer-rooftops.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: scroll;
+  color: rgba(255,255,255,.7);
+  padding:4rem 0 2rem;
+}
+.footer > .container{ position:relative; z-index:1; }
+.footer-social{ text-align:center; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:3rem; margin-bottom:3rem; }
+.footer-social-label{ font-family:var(--font-display); color:#fff; font-size:1.3rem; margin-bottom:.5rem; }
+.footer-social-sub{ color: rgba(255,255,255,.5); font-size:.88rem; margin-bottom:1.5rem; }
+.footer-social-links{ display:flex; justify-content:center; gap:2rem; }
+.footer-social-links a{ font-size:.85rem; color: rgba(255,255,255,.75); }
+.footer-social-links a:hover{ color: var(--gold); }
+
+.footer-bottom{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:2.5rem; margin-bottom:2.5rem; }
+.footer-brand{ display:flex; align-items:center; gap:.9rem; }
+.footer-brand img{ height:40px; }
+.footer-brand-name{ font-family:var(--font-display); color:#fff; font-size:.9rem; letter-spacing:.05em; margin-bottom:.3rem; }
+.footer-brand-tagline{ font-size:.8rem; color: rgba(255,255,255,.6); margin-bottom:.15rem; }
+.footer-brand-scope{ font-size:.72rem; color: var(--gold-soft); letter-spacing:.03em; margin-bottom:.6rem; }
+.footer-disclaimer{ max-width:44rem; margin:0 auto 1.5rem; text-align:center; font-size:.74rem; line-height:1.6; color: rgba(255,255,255,.35); }
+.footer-copy{ text-align:center; font-size:.78rem; color: rgba(255,255,255,.35); border-top:1px solid rgba(255,255,255,.08); padding-top:1.75rem; }
+.footer-brand-line{ font-size:.8rem; color: rgba(255,255,255,.55); }
+.footer-cols{ display:flex; gap:4rem; }
+.footer-col-title{ color:#fff; font-size:.82rem; font-weight:600; margin-bottom:.9rem; }
+.footer-cols a{ display:block; font-size:.83rem; color: rgba(255,255,255,.55); margin-bottom:.65rem; }
+.footer-cols a:hover{ color: var(--gold); }
+.footer-copy{ text-align:center; font-size:.78rem; color: rgba(255,255,255,.35); border-top:1px solid rgba(255,255,255,.08); padding-top:1.75rem; }
+
+@media (max-width: 640px){
+  .footer-bottom{ flex-direction:column; }
+  .footer-cols{ gap:2.5rem; }
+}
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+  <div class="nav-wrap">
+    <a href="#home" class="brand">
+      <img src="assets/logo-header.png" alt="Pro Dak Inspect" class="brand-logo-img">
+      <div class="brand-text">
+        <span class="name">PRO DAK INSPECT</span>
+        <span class="tag">ONAFHANKELIJKE INSPECTIES MET DRONE</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#onafhankelijk">Onafhankelijk</a>
+      <a href="#diensten">Diensten</a>
+      <a href="#pakketten">Pakketten</a>
+      <a href="#over-ons">Over ons</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="header-cta">
+      <a href="#contact" class="btn btn-gold">Vraag een offerte aan</a>
+    </div>
+    <button class="menu-toggle" aria-label="Menu">&#9776;</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="home" class="hero">
+  <div class="hero-inner container">
+    <p class="hero-eyebrow">Onafhankelijke dakinspectie met drone</p>
+    <h1 class="hero-title">Onafhankelijke dakinspectie voor een helder en betrouwbaar beeld van uw dak.</h1>
+    <p class="hero-sub">Een onafhankelijke dakinspectie geeft u een objectief beeld van de staat van uw dak, zonder dat wij gebonden zijn aan een dakdekker of reparatiebedrijf. Zo weet u precies welke problemen er zijn en welke werkzaamheden daadwerkelijk nodig zijn.</p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn btn-gold">Vraag uw dakinspectie aan</a>
+      <a href="#diensten" class="btn btn-outline-dark">Bekijk onze diensten</a>
+    </div>
+    <p class="hero-motto">Objectief. Professioneel. Onafhankelijk.</p>
+    <div class="hero-features">
+      <div class="hero-feature">
+        <p class="hf-title">Onafhankelijk</p>
+        <p class="hf-desc">Niet gebonden aan een dakdekker</p>
+      </div>
+      <div class="hero-feature">
+        <p class="hf-title">Snel</p>
+        <p class="hf-desc">Effici&euml;nte inspectie vanuit de lucht</p>
+      </div>
+      <div class="hero-feature">
+        <p class="hf-title">Duidelijk</p>
+        <p class="hf-desc">Professionele beelden en inspectierapport</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAAROM ONAFHANKELIJK -->
+<section id="onafhankelijk" class="section">
+  <div class="container">
+    <p class="eyebrow">Onafhankelijk</p>
+    <h2 class="section-title">Waarom een onafhankelijke dakinspectie?</h2>
+    <div class="grid-2 reason-grid">
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Objectief advies</h3>
+        <p>U krijgt een onafhankelijke beoordeling van de werkelijke staat van uw dak.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Geen onnodige werken</h3>
+        <p>U krijgt inzicht in wat echt noodzakelijk is en voorkomt onnodige reparaties.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Duidelijk inzicht</h3>
+        <p>Met een professionele inspectie worden mogelijke gebreken en aandachtspunten zichtbaar.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Betere beslissing</h3>
+        <p>Met een onafhankelijk inspectierapport kunt u zelf beslissen welke vervolgstappen u wilt nemen.</p>
+      </div>
+    </div>
+    <a href="#contact" class="btn btn-gold" style="margin-top:2.5rem;">Vraag uw dakinspectie aan</a>
+    <p class="tags">Objectief. Professioneel. Onafhankelijk.</p>
+  </div>
+</section>
+
+<!-- DRONE TECH -->
+<section class="section section-muted">
+  <div class="container drone-section">
+    <div class="drone-text">
+      <p class="eyebrow">Dronetechnologie</p>
+      <h2 class="section-title">Professionele inspectie met moderne dronetechnologie</h2>
+      <p class="section-desc">Met moderne dronetechnologie kunnen moeilijk bereikbare delen van een dak veilig en effici&euml;nt vanuit de lucht worden ge&iuml;nspecteerd.</p>
+      <a href="#contact" class="btn btn-gold">Vraag uw dakinspectie aan</a>
+    </div>
+    <div class="drone-image">
+      <img src="assets/drone-inspection.jpg" alt="Drone inspecteert het dak van een Belgische woning vanuit de lucht">
+    </div>
+  </div>
+</section>
+
+<!-- DIENSTEN -->
+<section id="diensten" class="section">
+  <div class="container">
+    <p class="eyebrow">Diensten</p>
+    <h2 class="section-title">Onze diensten</h2>
+    <p class="section-desc">Professionele drone-inspecties voor onderhoud, schade, renovatie en documentatie.</p>
+    <div class="service-grid">
+
+      <div class="service-card">
+        <h3>Dakinspectie</h3>
+        <p class="service-price">Vanaf &euro;99</p>
+        <p class="service-desc">Professionele visuele controle van uw dak met drone.</p>
+        <ul class="service-list">
+          <li>Dakpannen en dakbedekking</li>
+          <li>Nok en dakranden</li>
+          <li>Schoorstenen en dakgoten</li>
+          <li>Zichtbare beschadigingen</li>
+          <li>Mos en begroeiing</li>
+          <li>Moeilijk bereikbare delen</li>
+          <li>Inspectierapport</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <h3>Zonnepanelen inspectie</h3>
+        <p class="service-price">&euro;100</p>
+        <p class="service-desc">Visuele inspectie van zonnepanelen en zichtbare onderdelen.</p>
+        <ul class="service-list">
+          <li>Zichtbare beschadigingen</li>
+          <li>Vuil en begroeiing</li>
+          <li>Visuele controle van bevestiging</li>
+          <li>Zichtbare kabels en aansluitingen</li>
+          <li>Fotodocumentatie</li>
+          <li>Inspectierapport</li>
+        </ul>
+        <p class="service-note">Geen elektrische of thermische diagnose.</p>
+      </div>
+
+      <div class="service-card">
+        <h3>Gevelinspectie</h3>
+        <p class="service-price">Vanaf &euro;129</p>
+        <p class="service-desc">Veilige visuele controle van moeilijk bereikbare gevels.</p>
+        <ul class="service-list">
+          <li>Scheuren</li>
+          <li>Beschadigde delen</li>
+          <li>Loszittende elementen</li>
+          <li>Voegen</li>
+          <li>Dak- en gevelranden</li>
+          <li>Fotodocumentatie</li>
+          <li>Inspectierapport</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <h3>Schade-inspectie</h3>
+        <p class="service-price">Vanaf &euro;149</p>
+        <p class="service-desc">Voor zichtbare schade na bijvoorbeeld storm, hagel of hevige regen.</p>
+        <ul class="service-list">
+          <li>Dakschade</li>
+          <li>Gevelschade</li>
+          <li>Zichtbare schade aan zonnepanelen</li>
+          <li>Overzichtsfoto's</li>
+          <li>Detailfoto's</li>
+          <li>Gedetailleerd inspectierapport</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <h3>Verzekeringsclaim</h3>
+        <p class="service-price">&euro;200</p>
+        <p class="service-desc">Duidelijke visuele documentatie voor een verzekeringsdossier.</p>
+        <ul class="service-list">
+          <li>Overzichtsfoto's en detailfoto's</li>
+          <li>Dronebeelden</li>
+          <li>Duidelijke aanduiding van zichtbare schade</li>
+          <li>Gedetailleerd inspectierapport</li>
+          <li>Digitale documentatie</li>
+        </ul>
+        <p class="service-note">Pro Dak Inspect levert visuele documentatie en geen technische of verzekeringskundige expertise.</p>
+      </div>
+
+      <div class="service-card">
+        <h3>Dakwerken &mdash; Voor &amp; Na</h3>
+        <p class="service-price">&euro;250</p>
+        <p class="service-desc">Professionele documentatie van de toestand v&oacute;&oacute;r en na dakwerken.</p>
+        <ul class="service-list">
+          <li>Overzichts- en detailfoto's v&oacute;&oacute;r de werken</li>
+          <li>Documentatie van de bestaande toestand</li>
+          <li>Nieuwe foto's na de werken</li>
+          <li>Documentatie van het eindresultaat</li>
+          <li>Voor/na vergelijking</li>
+          <li>Gedetailleerd rapport en digitale levering</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PAKKETTEN -->
+<section id="pakketten" class="section section-dark">
+  <div class="container">
+    <p class="eyebrow eyebrow-light">Pakketten</p>
+    <h2 class="section-title title-light">Onze pakketten</h2>
+    <p class="section-desc desc-light">Kies de inspectie die het beste bij uw situatie past.</p>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <p class="price-name">Start</p>
+        <p class="price-amount">&euro;99</p>
+        <p class="price-tagline">Snelle dakcontrole</p>
+        <ul class="price-list">
+          <li>Drone-inspectie</li>
+          <li>15&ndash;25 foto's</li>
+          <li>Controle op zichtbare schade</li>
+          <li>Korte beoordeling</li>
+          <li>Inspectierapport</li>
+          <li>Digitale levering</li>
+        </ul>
+        <p class="price-note">Voor een snelle controle van uw dak.</p>
+        <a href="#contact" class="btn btn-outline-dark price-cta">Start aanvragen</a>
+      </div>
+
+      <div class="price-card price-card-featured">
+        <p class="price-badge">Meest gekozen</p>
+        <p class="price-name">Complete</p>
+        <p class="price-amount">&euro;149</p>
+        <p class="price-tagline">Complete dakinspectie</p>
+        <ul class="price-list">
+          <li>Volledige drone-inspectie</li>
+          <li>30&ndash;50 foto's</li>
+          <li>Dronevideo</li>
+          <li>Controle van dak, nok, schoorsteen, dakgoten en dakranden</li>
+          <li>Controle op zichtbare schade en aandachtspunten</li>
+          <li>Gedetailleerd inspectierapport</li>
+          <li>Foto's met duidelijke aanduidingen</li>
+          <li>Digitale levering</li>
+        </ul>
+        <a href="#contact" class="btn btn-gold price-cta">Complete aanvragen</a>
+      </div>
+
+      <div class="price-card">
+        <p class="price-name">Premium</p>
+        <p class="price-amount">&euro;500</p>
+        <p class="price-tagline">Complete gebouwinspectie + 3D</p>
+        <p class="price-subtag">Dak + gevels + zonnepanelen + 3D</p>
+        <ul class="price-list">
+          <li>Volledige dakinspectie</li>
+          <li>Gevelinspectie</li>
+          <li>Visuele zonnepaneleninspectie</li>
+          <li>Hoge-resolutiefoto's</li>
+          <li>Dronevideo</li>
+          <li>Gedetailleerd inspectierapport</li>
+          <li>Foto's met duidelijke aanduidingen</li>
+          <li>3D-model van het gebouw/dak</li>
+          <li>Complete digitale documentatie</li>
+        </ul>
+        <p class="price-note">Voor grotere of complexere gebouwen maken we een offerte op maat.</p>
+        <a href="#contact" class="btn btn-outline-dark price-cta">Premium aanvragen</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOE WERKT HET -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">Werkwijze</p>
+    <h2 class="section-title">Hoe werkt het?</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <p class="step-num">01</p>
+        <h3>Aanvraag</h3>
+        <p>Neem contact met ons op en vertel ons wat u wilt laten inspecteren.</p>
+      </div>
+      <div class="step-card">
+        <p class="step-num">02</p>
+        <h3>Drone-inspectie</h3>
+        <p>Wij brengen uw dak of gebouw veilig vanuit de lucht in beeld.</p>
+      </div>
+      <div class="step-card">
+        <p class="step-num">03</p>
+        <h3>Analyse</h3>
+        <p>De beelden worden zorgvuldig bekeken en relevante zichtbare aandachtspunten worden geselecteerd.</p>
+      </div>
+      <div class="step-card">
+        <p class="step-num">04</p>
+        <h3>Rapport</h3>
+        <p>U ontvangt duidelijke foto's, video en het bijbehorende inspectierapport.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAAROM PRO DAK INSPECT -->
+<section id="over-ons" class="section section-muted">
+  <div class="container">
+    <p class="eyebrow">Over ons</p>
+    <h2 class="section-title">Waarom Pro Dak Inspect?</h2>
+    <div class="grid-2">
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Veilig</h3>
+        <p>Moeilijk bereikbare plaatsen kunnen visueel worden ge&iuml;nspecteerd zonder onnodig op het dak te lopen.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Snel</h3>
+        <p>Een drone-inspectie kan effici&euml;nt een groot oppervlak in beeld brengen.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Duidelijk</h3>
+        <p>Hoge-resolutiefoto's en duidelijke rapportage maken zichtbare aandachtspunten eenvoudig te begrijpen.</p>
+      </div>
+      <div class="reason-card">
+        <div class="reason-icon">&#9673;</div>
+        <h3>Professioneel</h3>
+        <p>Iedere inspectie wordt zorgvuldig gedocumenteerd met foto's en een passend inspectierapport.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PREMIUM 3D -->
+<section class="section section-dark">
+  <div class="container drone-section">
+    <div class="drone-image">
+      <img src="assets/premium-3d.jpg" alt="Digitaal 3D-model van een woning met dak en gevels na een drone-inspectie">
+    </div>
+    <div class="drone-text">
+      <p class="eyebrow eyebrow-light">Premium</p>
+      <h2 class="section-title title-light">Een compleet beeld van uw gebouw</h2>
+      <p class="section-desc desc-light">Met onze Premium-inspectie combineren we dronebeelden van het dak, gevels en zonnepanelen met een digitaal 3D-model. Zo krijgt u een uitgebreid en overzichtelijk beeld van uw gebouw.</p>
+      <a href="#contact" class="btn btn-gold">Bekijk Premium &mdash; &euro;500</a>
+    </div>
+  </div>
+</section>
+
+<!-- SCHADE -->
+<section class="section schade-section">
+  <div class="container">
+    <h2 class="section-title schade-title">Schade? Wij brengen het duidelijk in beeld.</h2>
+    <p class="section-desc schade-desc">Na storm, hagel of andere schade kunnen wij de zichtbare toestand van uw dak en gebouw professioneel documenteren. U ontvangt duidelijke foto's en een gedetailleerd inspectierapport dat u kunt gebruiken als visuele documentatie voor uw verzekeringsdossier.</p>
+    <p class="schade-note">Verzekeringsclaim &mdash; &euro;200</p>
+    <a href="#contact" class="btn btn-gold">Vraag een schade-inspectie aan</a>
+    <p class="schade-disclaimer">Pro Dak Inspect levert visuele documentatie en geen technische of verzekeringskundige expertise.</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section">
+  <div class="container-sm">
+    <p class="eyebrow">FAQ</p>
+    <h2 class="section-title">Veelgestelde vragen</h2>
+    <div class="faq-list">
+
+      <details class="faq-item" open>
+        <summary>Wat inspecteren jullie?</summary>
+        <p>Daken, gevels en zonnepanelen. We bieden ook schade-inspecties, documentatie voor verzekeringsclaims, voor-en-na-documentatie van dakwerken en 3D-modellen binnen het Premium-pakket.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Is een inspectierapport inbegrepen?</summary>
+        <p>Ja. Elk pakket bevat een inspectierapport. Bij de Complete en Premium pakketten is dit een gedetailleerd inspectierapport.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Kunnen jullie helpen bij stormschade?</summary>
+        <p>Ja. We kunnen zichtbare schade met dronebeelden documenteren.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Maken jullie foto's voor een verzekeringsclaim?</summary>
+        <p>Ja. Onze dienst Verzekeringsclaim kost &euro;200 en bevat uitgebreide fotodocumentatie en een gedetailleerd inspectierapport.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Maken jullie thermische inspecties?</summary>
+        <p>Nee. Pro Dak Inspect biedt momenteel geen thermische inspecties aan.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Maken jullie 3D-modellen?</summary>
+        <p>Ja. Een 3D-model is inbegrepen in het Premium-pakket van &euro;500.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Werken jullie voor particulieren en bedrijven?</summary>
+        <p>Ja. We werken voor particulieren, dakdekkers, aannemers, vastgoedprofessionals, syndici en bedrijven.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Zijn de prijzen vast?</summary>
+        <p>De vermelde prijzen zijn vanaf-prijzen waar aangegeven. Voor grotere of complexere gebouwen maken we een offerte op maat.</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="section section-dark contact-section">
+  <div class="container contact-grid">
+    <div class="contact-info">
+      <p class="eyebrow eyebrow-light">Contact</p>
+      <h2 class="section-title title-light">Vraag uw inspectie aan</h2>
+      <p class="desc-light">Vertel ons wat u wilt laten inspecteren. Wij nemen zo snel mogelijk contact met u op.</p>
+      <ul class="contact-details">
+        <li>&#128222; +32 488 20 72 96</li>
+        <li>&#9993; info@prodakinspect.be</li>
+        <li>&#128205; prodakinspect.be</li>
+      </ul>
+    </div>
+    <form class="contact-form" onsubmit="event.preventDefault(); alert('Bedankt! Dit is een statische demo-versie van het formulier.');">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Naam</label>
+          <input type="text" placeholder="Uw naam" required>
+        </div>
+        <div class="form-field">
+          <label>E-mail</label>
+          <input type="email" placeholder="u@voorbeeld.be" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Telefoonnummer</label>
+          <input type="tel" placeholder="+32 ...">
+        </div>
+        <div class="form-field">
+          <label>Adres / locatie van het gebouw</label>
+          <input type="text" placeholder="Straat, gemeente">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Welke dienst heeft u nodig?</label>
+        <select>
+          <option>Kies een dienst</option>
+          <option>Dakinspectie</option>
+          <option>Zonnepanelen inspectie</option>
+          <option>Gevelinspectie</option>
+          <option>Schade-inspectie</option>
+          <option>Verzekeringsclaim</option>
+          <option>Dakwerken &mdash; Voor &amp; Na</option>
+          <option>Premium pakket</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Bericht</label>
+        <textarea rows="4" placeholder="Wat wilt u laten inspecteren?"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Foto's uploaden</label>
+        <div class="file-upload">
+          <input type="file" id="photo-upload" accept="image/*" multiple>
+          <label for="photo-upload" class="file-upload-btn">Bestand kiezen</label>
+          <span class="file-upload-status" id="file-upload-status">No file chosen</span>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;">Offerte aanvragen</button>
+    </form>
+  </div>
+</section>
+<script>
+  var fi = document.getElementById('photo-upload');
+  var st = document.getElementById('file-upload-status');
+  if (fi) {
+    fi.addEventListener('change', function(){
+      st.textContent = fi.files.length ? (fi.files.length + ' bestand(en) gekozen') : 'No file chosen';
+    });
+  }
+</script>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-social">
+      <p class="footer-social-label">Volg Pro Dak Inspect</p>
+      <p class="footer-social-sub">Bekijk recente inspecties, dronebeelden en praktische tips over dakonderhoud.</p>
+      <div class="footer-social-links">
+        <a href="#">&#128247; Instagram</a>
+        <a href="#">&#128220; Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-brand">
+        <img src="assets/logo-mark-gold.png" alt="Pro Dak Inspect">
+        <div>
+          <p class="footer-brand-name">PRO DAK INSPECT</p>
+          <p class="footer-brand-tagline">Professionele drone-inspecties</p>
+          <p class="footer-brand-scope">Dak &bull; Gevel &bull; Zonnepanelen &bull; Schade &bull; 3D</p>
+          <p class="footer-brand-line">+32 488 20 72 96</p>
+          <p class="footer-brand-line">info@prodakinspect.be</p>
+          <p class="footer-brand-line">prodakinspect.be</p>
+        </div>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <p class="footer-col-title">Navigatie</p>
+          <a href="#home">Home</a>
+          <a href="#onafhankelijk">Onafhankelijk</a>
+          <a href="#diensten">Diensten</a>
+          <a href="#pakketten">Pakketten</a>
+          <a href="#over-ons">Over ons</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </div>
+    </div>
+    <p class="footer-disclaimer">Pro Dak Inspect voert visuele drone-inspecties uit en levert fotodocumentatie en inspectierapporten. Wij leveren geen technische, thermische of verzekeringskundige expertise. Vermelde prijzen zijn indicatief en gelden als vanaf-prijs waar aangegeven.</p>
+    <p class="footer-copy">&copy; 2026 Pro Dak Inspect &mdash; prodakinspect.be</p>
+  </div>
+</footer>
+</body>
+</html>
